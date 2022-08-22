@@ -1,0 +1,933 @@
+
+R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-conda-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> # LIBRARIES ---------------------------------------------------------------
+> 
+> 
+> library(compositions)
+Welcome to compositions, a package for compositional data analysis.
+Find an intro with "? compositions"
+
+
+Attaching package: ‘compositions’
+
+The following objects are masked from ‘package:stats’:
+
+    anova, cor, cov, dist, var
+
+The following objects are masked from ‘package:base’:
+
+    %*%, norm, scale, scale.default
+
+> library(spoutlier)
+
+Attaching package: ‘spoutlier’
+
+The following object is masked from ‘package:compositions’:
+
+    normalize
+
+> library(randcorr)
+> library(dbscan)
+> library(pROC)
+Type 'citation("pROC")' for a citation.
+
+Attaching package: ‘pROC’
+
+The following objects are masked from ‘package:compositions’:
+
+    cov, var
+
+The following objects are masked from ‘package:stats’:
+
+    cov, smooth, var
+
+> library(randcorr)
+> library(DDoutlier)
+> library(WGCNA)
+Loading required package: dynamicTreeCut
+Loading required package: fastcluster
+
+Attaching package: ‘fastcluster’
+
+The following object is masked from ‘package:stats’:
+
+    hclust
+
+
+
+Attaching package: ‘WGCNA’
+
+The following object is masked from ‘package:compositions’:
+
+    cor
+
+The following object is masked from ‘package:stats’:
+
+    cor
+
+> library(MASS)
+> 
+> library("lionessR")
+> library("SummarizedExperiment")
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following object is masked from ‘package:pROC’:
+
+    var
+
+The following object is masked from ‘package:spoutlier’:
+
+    normalize
+
+The following objects are masked from ‘package:compositions’:
+
+    normalize, var
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+> # install.packages("lsa")
+> library(lsa)
+Loading required package: SnowballC
+> 
+> checkStrict <- function(f, silent=FALSE) {
++   # """
++   # Checking a function does not use global parameters
++   # """
++   vars <- codetools::findGlobals(f)
++   found <- !vapply(vars, exists, logical(1), envir=as.environment(2))
++   if (!silent && any(found)) {
++     warning("global variables used: ", paste(names(found)[found], collapse=', '))
++     return(invisible(FALSE))
++   }
++   
++   !any(found)
++ }
+> 
+> asso_diff = function (x, f = netFun)
++ {
++   # """
++   # Calculating ISNs and LOO Net
++   # """
++   is.se <- inherits(x, "SummarizedExperiment")
++   is.matrix <- is.matrix(x)
++   if (!is.function(f)) {
++     stop("please use a function")
++   }
++   if (is.matrix(x)) {
++     print("take numeric matrix as input, ignore parameter for assay")
++   }
++   if (is.se) {
++     colData <- SummarizedExperiment::colData(x)
++     x <- SummarizedExperiment::assay(x)
++   }
++   if (!is.matrix(x)) {
++     print("please use a numeric matrix as input")
++   }
++   if (is.null(colnames(x))) {
++     colnames(x) = seq_len(ncol(x))
++   }
++   nrsamples <- ncol(x)
++   samples <- colnames(x)
++   # net1 <-(abs(bicor(t(x))))^2
++   net <- f(x)
++   # print(net[1:5,1:5])
++   # print(net1[1:5,1:5])
++   agg <- c(net)
++   lionessOutput <- matrix(NA, nrow(net) * ncol(net), nrsamples + 
++                             2)
++   colnames(lionessOutput) <- c("reg", "tar", samples)
++   lionessOutput[, 1] <- rep(row.names(net), ncol(net))
++   lionessOutput[, 2] <- rep(colnames(net), each = nrow(net))
++   lionessOutput <- as.data.frame(lionessOutput, stringsAsFactors = FALSE)
++   # lionessOutput[, 3:ncol(lionessOutput)] <- vapply(lionessOutput[, 
++   #                                                                3:ncol(lionessOutput)], as.numeric, vector("numeric", 
++   #                                                                                                           nrow(lionessOutput)))
++   # print("CHECKPOINT 1")
++   lionessOutput_recons <- matrix(NA, nrow(net) * ncol(net), nrsamples + 
++                                    2)
++   colnames(lionessOutput_recons) <- c("reg", "tar", samples)
++   lionessOutput_recons[, 1] <- rep(row.names(net), ncol(net))
++   lionessOutput_recons[, 2] <- rep(colnames(net), each = nrow(net))
++   lionessOutput_recons <- as.data.frame(lionessOutput_recons, stringsAsFactors = FALSE)
++   # lionessOutput_recons[, 3:ncol(lionessOutput_recons)] <- vapply(lionessOutput_recons[, 
++   #                                                                3:ncol(lionessOutput_recons)], as.numeric, vector("numeric", 
++   #                                                                                                           nrow(lionessOutput_recons)))
++   # print("CHECKPOINT 2")
++   
++   for (i in seq_len(nrsamples)) {
++     # ss <- c((abs(bicor(t(x[, -i]))))^2 ) 
++     ss <- c(f(x[,-i])) # apply netFun on all samples minus one
++     #  print("CHECKPOINT 3")
++     lionessOutput[, i + 2] <- nrsamples * (agg -ss) + ss
++     lionessOutput_recons[, i + 2] <- agg - ss
++   }
++   edges <- paste(lionessOutput[, 1], lionessOutput[, 2], sep = "_")
++   nodes <- colnames(x)
++   rowData <- S4Vectors::DataFrame(row.names = edges, reg = lionessOutput[, 
++                                                                          1], tar = lionessOutput[, 2])
++   if (!is.se) {
++     colData <- S4Vectors::DataFrame(row.names = nodes, sample = nodes)
++   }
++   # print("CHECKPOINT 4")
++   
++   se <- SummarizedExperiment::SummarizedExperiment(assays = list(lioness = as.matrix(lionessOutput[, 3:ncol(lionessOutput)]),
++                                                                  perturbed = as.matrix(lionessOutput_recons[, 3:ncol(lionessOutput_recons)])),
++                                                    colData = colData, rowData = rowData)
++   return(se)
++ }
+> checkStrict(asso_diff)
+[1] TRUE
+> func = function(x, esp)
++ {
++   function(x)
++   {
++     abs(bicor(t(x))) ^ esp
++   }
++   
++ }
+> 
+> indNet_function = function(sampled){
++   # """
++   # Calculated ISN with the LIONESS METHOD and then eliminate the double entries e.g. Gene1_gene2 & Gene2_gene1
++   # 
++   # Return: a vector with ISN and LOO 
++   # """
++   rownames(sampled) = paste0("Ind", seq(1,nrow(sampled)))
++   colnames(sampled) = paste0("Gene", seq(1,ncol(sampled)))
++   
++   transpose_filtered_vector_ID = t(sampled)
++   rowData <- S4Vectors::DataFrame(row.names = rownames(transpose_filtered_vector_ID), gene = rownames(transpose_filtered_vector_ID))
++   colData <- S4Vectors::DataFrame(col.names = colnames(transpose_filtered_vector_ID), sample =colnames(transpose_filtered_vector_ID))
++   
++   se <- SummarizedExperiment::SummarizedExperiment(assays = list(counts = transpose_filtered_vector_ID), 
++                                                    colData = colData, rowData = rowData)
++   
++   lionessResults  <- asso_diff(se)
++   # lionessResults  <- lioness(se)
++   
++   # summary(lionessResults)
++   all_assays = assays(lionessResults)
++   Resulting_net = all_assays$lioness
++   # dim(Resulting_net)
++   # head(str(Resulting_net))
++   # summary(Resulting_net)
++   # type(Resulting_net)
++   # head(rownames(Resulting_net) )
++   Recons_net = all_assays$perturbed
++   
++   names_r_net = rownames(Resulting_net)
++   
++   length(names_r_net)
++   to_eliminate_r = c()
++   for (i in 1:(length(names_r_net)))
++   {
++     elemento = names_r_net[i]
++     fin = unlist(strsplit(elemento,"_"))
++     fin2 = paste0(fin[2],sep = "_", fin[1])
++     value = match(fin2,names_r_net, nomatch = 0)
++     if (value > i || fin2 == elemento) 
++     {
++       to_eliminate_r= append(to_eliminate_r, value)
++     }
++     
++     if (i %% 1000 == 0){ print(i)}
++   }
++   Resulting_net = Resulting_net[-to_eliminate_r,]
++   Recons_net = Recons_net[-to_eliminate_r,]
++   # Recons_net[Recons_net>1]
++   # Resulting_net[Resulting_net>1]
++   # global_net2$global>1
++   net = cor(t(transpose_filtered_vector_ID) )
++   lionessOutput <- matrix(NA, nrow(net) * ncol(net),3)
++   lionessOutput[, 1] <- rep(row.names(net), ncol(net))
++   lionessOutput[, 2] <- rep(colnames(net), each = nrow(net))
++   lionessOutput <- as.data.frame(lionessOutput, stringsAsFactors = FALSE)
++   lionessOutput[,3] <- c(net)
++   # global_net = data.frame("global" = lionessOutput[,3] )
++   # rownames(global_net) = paste(lionessOutput[,1], lionessOutput[,2], sep = "_")
++   
++   # global_net$est = rownames(global_net)
++   # global_net2 = global_net[-to_eliminate_r,]
++   # r_glob = rownames(global_net)
++   
++   
++   
++   
++   
++   
++   # dim(Resulting_net )
++   return (list(IndNet = t(Resulting_net), Recons_net = t(Recons_net) ) )  
++   
++   
++ }
+> checkStrict(indNet_function)
+Warning message:
+In checkStrict(indNet_function) : global variables used: asso_diff
+> 
+> evaluate_LOO = function(n,m, rep, sampled ){
++   # """
++   # 
++   # 
++   # Evaluate with the LOO method: take as input 
++   # n = sample size
++   # m = # outlier
++   # rep = # repetition
++   # sampled = Input (node) data
++   # 
++   # Calculate the quantiles 0.025 and 0.975 of the empirical distribution  
++   # Calculate the accuracy and precision 
++   # Return a vector [0,0,1,.. 0] of prediction (with 1 if the summed edges  is over the threhsold
++   # 0 otherwise
++   # both edges and threhsold are founded in a module as the sum of the absolute univariate difference 
++   # sum(abs(real_cor_ - cor_perturbed_ ) ) / 2
++   # """
++   
++   
++   (tot_sigma =  cor(sampled) )
++   
++   diff_vector = c()
++   for (i in 1:rep)
++   {
++     sampled_ = mvrnorm(n = n, rep(0, ncol(tot_sigma)), tot_sigma)
++     # real_cor = abs(bicor(sampled))^2
++     # real_cor = FUN(sampled_, ...)
++     real_cor_ = cor(sampled_)
++     # cor(sampled) #diff between cor and var --> corr hp that var ==1
++     # cor_perturbed = abs(bicor(sampled[-1,]))^2
++     cor_perturbed_ = cor(sampled_[-1,]) # FUN(sampled_[-1,], ...)
++     
++     diff =  sum(abs(real_cor_ - cor_perturbed_ ) ) / 2
++     
++     diff_vector[i] = diff
++   }
++   
++   emp_dist_neg = ecdf(diff_vector)
++   emp_dist_neg
++   (qq_neg160 = quantile(ecdf(diff_vector),c(0.95)) ) 
++   
++   acc_same_n  = c()
++   ref_same_n  = c()
++   acc_beta_same_n= c()
++   ref_beta_same_n= c()
++   d_vector = c()
++   prediction = c()
++   for (i in 1:(n-m) ) 
++   {
++     
++     cor_perturbed = cor(sampled[-i,])
++     # trasf_cor = 0.5*log10( (1+real_cor)/(1-real_cor) )
++     # trasf_cor_pert = 0.5*log10( (1+cor_perturbed)/(1-cor_perturbed) )
++     diff =  sum( abs(tot_sigma - cor_perturbed ) ) / 2 
++     d_vector = append(d_vector, diff)
++     
++     if (diff < qq_neg160[1][[1]]){
++       acc_same_n = c(acc_same_n,diff) 
++       prediction = c(prediction,0)
++     } else {
++       ref_same_n = c(ref_same_n,diff) 
++       prediction = c(prediction,1)
++     }
++     
++   }
++   
++   
++   for (i in (n-m+1):n)
++   {
++     # print(i)
++     cor_perturbed = cor(sampled[-i,])
++     # trasf_cor = 0.5*log10( (1+real_cor)/(1-real_cor) )
++     # trasf_cor_pert = 0.5*log10( (1+cor_perturbed)/(1-cor_perturbed) )
++     diff =  sum( abs(tot_sigma - cor_perturbed ) ) / 2 
++     d_vector = append(d_vector, diff)
++     
++     if (diff < qq_neg160[1][[1]]){
++       acc_beta_same_n = c(acc_beta_same_n,diff) 
++       prediction = c(prediction,0)
++     } else {
++       ref_beta_same_n = c(ref_beta_same_n,diff) 
++       prediction = c(prediction,1)
++       
++     }
++   }
++   
++   (alpha_same_n =     length(ref_same_n)/(length(acc_same_n)+length(ref_same_n)) )
++   (beta_same_n =     length(ref_beta_same_n)/(length(acc_beta_same_n)+length(ref_beta_same_n)) )
++   
++   is_out= c(rep(0,n-m), rep(1,m))
++   ( t_LOO = table(LOO=prediction, Actual=is_out) )
++   return( d_vector)
++   
++ } ## version witrh returning distance vector
+> checkStrict(evaluate_LOO)
+[1] TRUE
+> 
+> evalute_knn = function(is_out, IndNet, k_min , k_max){
++   # """
++   # evaluate the kNN algorithm 
++   # Input: a vector with [0,,1,..1] if an obseration is outlier or not 
++   # IndNet . a network to use as input on the kNN algorithm (can be both Indnet or LOONet)
++   # k_min and k_max the minimum and maximum extreme of the k used by the method and aggregated in the results
++   # 
++   # Return: a knn.aggregate object whose main interesting component for us is the distance ranking (outlier score)
++   # 
++   # """
++   
++   # colnames(IndNet)
++   
++   n = nrow(IndNet); p = ncol(IndNet)
++   # kimn = min(log(n),p+1) ; kmax =  max(log(n),p+1)
++   knn.agg<-KNN_AGG(IndNet, k_min = k_min, k_max = k_max)
++   # plot(knn.agg)
++   
++   # rfind<- rpart_split_finder(knn.agg, n)
++   # plot(sort(knn.agg),col=is_out[order(knn.agg)]+1)
++   # abline(h=rfind)
++   knn.agg #scegliere l'indice del valore degli split possibili che si desideri usare come soglia
++   #Si ricorda che eventuali altri valori di soglia desiderati possono essere scelti manualmente
++ }
+> 
+> checkStrict(evalute_knn)
+[1] TRUE
+> 
+> 
+> evaluate_LOO_multivariate_threhsold = function(n,m, rep, sampled , dims){
++   # """
++   # 
++   # 
++   # Evaluate with the MultiLOO method: take as input 
++   # n = sample size
++   # m = # outlier
++   # rep = # repetition
++   # sampled = Input (node) data
++   # dims: the dimension of the module 
++   # 
++   # Calculate the quantiles 0.025 and 0.975 of the empirical distribution  
++   # Calculate the accuracy and precision 
++   
++   # Calculate a p-value for each DIMENSION of the network , for each edge, 
++   # multivariate cloud of significance. 
++   # then to have a scalar result, the approximation is done via 
++   # Return a vector [0,0,1,.. 0] of prediction (with 1 if the summed edges  is over the threhsold
++   # 0 otherwise
++   # both edges and threhsold are founded in a module as the sum of the absolute univariate difference 
++   # sum(abs(real_cor_ - cor_perturbed_ ) ) / 2
++   
++   # Return : 
++   # List of number of dimension (edges) for which the threhsold is refused [ THREHSOLD is BONFERRONI corrected]
++   # and the pvalue for each dimension of na individual
++   # """
++   
++   
++   (tot_sigma =  cor(sampled) )
++   
++   diff_vector = matrix(NA, nrow = rep, ncol = (dims^2 - dims) /2)
++   for (i in 1:rep)
++   {
++     sampled_ = mvrnorm(n = n, rep(0, ncol(tot_sigma)), tot_sigma)
++     # real_cor = abs(bicor(sampled))^2
++     # real_cor = FUN(sampled_, ...)
++     real_cor_ = cor(sampled_)
++     # cor(sampled) #diff between cor and var --> corr hp that var ==1
++     # cor_perturbed = abs(bicor(sampled[-1,]))^2
++     cor_perturbed_ = cor(sampled_[-1,]) # FUN(sampled_[-1,], ...)
++     
++     diff =  (real_cor_ - cor_perturbed_ )
++     diff2 = as.vector(diff[upper.tri(diff)])
++     diff_vector[i,] = diff2
++   }
++   qq = 0.025 / ((dims^2 - dims) /2)
++   quantiles = c(qq,1-qq)
++   qq_neg160 = apply(diff_vector, MARGIN = 2, function(x) quantile(ecdf(x), quantiles ) )
++   ecdfs = apply(diff_vector, MARGIN = 2, function(x) ecdf(x) )
++   
++   prediction = c()
++   ff_ref = c()
++   all_p_values = matrix(NA, nrow = n, ncol = (dims^2 - dims) /2   )
++   for (i in 1:(n) ) 
++   {
++     
++     cor_perturbed = cor(sampled[-i,])
++     # trasf_cor = 0.5*log10( (1+real_cor)/(1-real_cor) )
++     # trasf_cor_pert = 0.5*log10( (1+cor_perturbed)/(1-cor_perturbed) )
++     diff =  tot_sigma - cor_perturbed
++     
++     diff2 = as.vector(diff[upper.tri(diff)])
++     diff2 = t(matrix(diff2))
++     final_ref = ifelse( ( diff2 > qq_neg160[1,] ) + (diff2 < qq_neg160[2,] )  == 2, TRUE, FALSE ) 
++     
++     p_values_emp = sapply(1:ncol(diff2), function(i) ecdfs[i][[1]](diff2[i]) )
++     all_p_values[i,] = p_values_emp
++     if (sum(final_ref) == (dims^2 - dims) /2 )
++     {
++       # acc_same_n = c(acc_same_n,diff) 
++       prediction = c(prediction,0)
++     } else {
++       # ref_same_n = c(ref_same_n,diff) 
++       prediction = c(prediction,1)
++     }
++     ff_ref[i] = sum(final_ref)
++     
++   }
++   is_out= c(rep(0,n-m), rep(1,m))
++   ( t_LOO = table(LOO=prediction, Actual=is_out) )
++   table(ff_ref)
++   # plot(ff_ref, col = is_out + 1)
++   ll = list(Refusal = ff_ref, p_values = all_p_values )
++   return( ll)
++   
++ }
+> checkStrict(evaluate_LOO_multivariate_threhsold)
+[1] TRUE
+> 
+> 
+> evaluate_optics = function(X, k)
++ {
++   
++   # """
++   # Evaluate optics method 
++   # 
++   # Input: X = Netwrok on which we want to perform the analysis 
++   #             E.g. IndNet or LooNet
++   #             k = the number of neighborhood for the optic procedure, anaolog of 
++   #             the k in kNN 
++   #             
++   # Returns: OF --> a vecor of outlier scores for each individual 
++   # """
++   res<-optics(X,eps=500,minPts = k) #scegliamo k1 ad esempio, scegliere il k desiderato
++   
++   resultKNN=kNN(X,k)  #ad esempio
++   # resultKNN# head(resultKNN$id,3)
++   numberid=resultKNN$id
++   # head(res$order,n=15)
++   #altro modo per estrarlo
++   distanzerech=res$reachdist
++   # head(distanzerech)
++   distanzerech[1]=distanzerech[2]
++   dist=vector()
++   lrd=vector()
++   n = nrow(X)
++   ###FIXING problems with replication
++   for (i in 1:n){
++     minptsvicini=numberid[i,]
++     dist[i]=mean(distanzerech[numberid[i,]])
++   }
++   distmagg=dist[dist>0]
++   valore=min(distmagg)
++   dist[dist==0]=valore/2
++   lrd=1/dist
++   # hist(dist)
++   numeratore=vector()
++   OF=vector()
++   
++   for (i in 1:n){
++     minptsvicini=numberid[i,]
++     lrd_numero=lrd[i]
++     lrd_minpts=lrd[numberid[i,]]
++     numeratore[i]=sum(lrd_minpts/lrd_numero)
++     OF[i]=numeratore[i]/k
++   }
++   # summary(lrd);sum(is.na(OF));str(OF)
++   # (sum=summary(OF))
++   ###cutting
++   # (cfind=rpart_split_finder(OF,length(OF)))
++   # (rfind=ctree_split_finder(OF,length(OF)))
++   ####
++   
++   #OF 
++   # plot(sort(OF),type="l",ylim=c(sum[1],sum[6]))
++   # abline(h=cfind[4])
++   # rbest_taglio <-  0.034# 0.017# sort(rfind)[2] #scegliere l'indice del valore degli split possibili che si desideri usare come soglia 
++   return(OF)
++   
++ }
+> 
+> checkStrict(evaluate_optics)
+[1] TRUE
+> 
+> 
+> evaluate_OTS = function(IndNet, s = 20)
++ {
++   # """
++   # Evaluate OTS method with our custom implementation
++   # 
++   # Input: IndNet = Netwrok on which we want to perform the analysis
++   #             E.g. IndNet or LooNet
++   #        s = the number of reference observation used for the procedure
++   #            Default = 20 as in the Karsten's paper 
++   # 
++   # This is the custom implemantion by me in whcih the choosen number of reference samples
++   # Are 21, [s +1] so when we want toc alcualte the OTS score of an observation inside of the 
++   # s+1 = 21 references samples we EXCLUDE THAT observation and every other observation is considered. 
++   # Otherwise, a random set of 20 observation is used. 
++   # 
++   # Method: Euclidean distance, take the minimum distance with the rational taht an outleir is an observation far away from everyother obs
++   # No scaling since the data are akready been pre scaled  
++   #
++   # Returns: distance vector --> a vecor of odistances for each individual, >> distance, >> probability being an outlier 
++   # """
++   
++   # s_sampled = scale(IndNet)IndNet
++   mean(IndNet)
++   var(IndNet)
++   dim(IndNet)
++   # s = 20
++   # one_time_sample %>% filter(rown)
++   row_sampled = sample(nrow(IndNet),size = s+1, replace = F )
++   one_time_sample = as.matrix(IndNet[row_sampled,])
++   distance_vector = data.frame(IND = rep(NA, nrow(IndNet)), DIST = rep(NA, nrow(IndNet)) )
++   for (i in 1:nrow(IndNet))
++   {
++     # print(i)
++     if (rownames(IndNet)[i] %in% rownames(one_time_sample)){
++       end_sample = as.matrix(one_time_sample[!row.names(one_time_sample)%in%rownames(IndNet)[i],])
++     } else {
++       end_sample = as.matrix(one_time_sample[sample(s+1,s, replace = F),])
++     }
++     min_dist = min(apply(end_sample, 1,function(x) dist(rbind(IndNet[i,],x))) )
++     distance_vector[i,] = c(rownames(IndNet)[i], min_dist)
++   }
++   
++   # plot(distance_vector$DIST)
++   return(distance_vector)
++   # roc_OTS<- roc(response = is_out, predictor = as.numeric(distance_vector$DIST))
++   # auc(roc_OTS)
++ }
+> checkStrict(evaluate_OTS)
+[1] TRUE
+> 
+> evaluate_OTS_cosine = function(IndNet, s = 20)
++ {
++   # """
++   # Evaluate OTS method with our custom implementation
++   # 
++   # Input: IndNet = Netwrok on which we want to perform the analysis
++   #             E.g. IndNet or LooNet
++   #        s = the number of reference observation used for the procedure
++   #            Default = 20 as in the Karsten's paper 
++   # 
++   # This is the custom implemantion by me in whcih the choosen number of reference samples
++   # Are 21, [s +1] so when we want toc alcualte the OTS score of an observation inside of the 
++   # s+1 = 21 references samples we EXCLUDE THAT observation and every other observation is considered. 
++   # Otherwise, a random set of 20 observation is used. 
++   # 
++   # Method: COSINE SIMILARITY , take the amximum: an outleir is not similar to any otehr observation s
++   #  Nos caling: data has already been pre scaled 
++   #
++   # Returns: distance vector --> a vecor of odistances for each individual, >> distance, >> probability being an outlier 
++   # """
++   
++   
++   
++   # s_sampled = scale(IndNet)IndNet
++   mean(IndNet)
++   var(IndNet)
++   dim(IndNet)
++   # s = 20
++   # one_time_sample %>% filter(rown)
++   row_sampled = sample(nrow(IndNet),size = s+1, replace = F )
++   one_time_sample = as.matrix(IndNet[row_sampled,])
++   distance_vector = data.frame(IND = rep(NA, nrow(IndNet)), DIST = rep(NA, nrow(IndNet)) )
++   for (i in 1:nrow(IndNet))
++   {
++     # print(i)
++     if (rownames(IndNet)[i] %in% rownames(one_time_sample)){
++       end_sample = as.matrix(one_time_sample[!row.names(one_time_sample)%in%rownames(IndNet)[i],])
++     } else {
++       end_sample = as.matrix(one_time_sample[sample(s+1,s, replace = F),])
++     }
++     max_dist = max(apply(end_sample, 1,function(x) cosine(IndNet[i,],x)) )
++     
++     cosine(end_sample[1,], IndNet[1,])
++     cosine(end_sample[2,], IndNet[1,])
++     cosine(end_sample[3,], IndNet[1,])
++     
++     distance_vector[i,] = c(rownames(IndNet)[i], max_dist)
++   }
++   
++   # plot(distance_vector$DIST)
++   return(distance_vector)
++   # roc_OTS<- roc(response = is_out, predictor = as.numeric(distance_vector$DIST))
++   # auc(roc_OTS)
++ }
+> checkStrict(evaluate_OTS_cosine)
+[1] TRUE
+> 
+> evaluate_deltaPCC = function(sampled)
++ {
++   # """
++   # Evaluate DeltaPCC method - the Liu et al implementation
++   # 
++   # Input: sampled : node network, a n * p network [ind * genes]
++   # 
++   # Procedure: leave one out an observation, calculate the difference and normalize it 
++   # To find a z-value
++   # 
++   # Returns: Z_PCC --> a Z-value that cab be compared with a N(0,1) to find the p-value
++   # """
++   (tot_sigma =  cor(sampled) )
++   n = nrow(sampled)
++   Z_PCC = rep(NA,n)
++   for (i in 1:n) 
++   {
++     cor_perturbed = cor(sampled[-i,])
++     # trasf_cor = 0.5*log10( (1+real_cor)/(1-real_cor) )
++     # trasf_cor_pert = 0.5*log10( (1+cor_perturbed)/(1-cor_perturbed) )
++     diff =  tot_sigma[1,2] - cor_perturbed[1,2] 
++     # d_vector = append(d_vector, diff)
++     Z_PCC[i] = abs(diff / (1 -  cor_perturbed[1,2]^2 ) * (n -1) )
++   }
++   return(Z_PCC)
++ }
+> checkStrict(evaluate_deltaPCC)
+[1] TRUE
+> 
+> evaluate_Cook_distance = function(IndNet)
++ {
++   # """
++   # Evaluate Cook_distance method - our custom implementation
++   # 
++   # Input: IndNet : A network that can be an IndNet or a LooNet
++   # 
++   # Procedure: For each edge that is in the module, it is a target and to predict all of the others 
++   # the edges are used as features and the cook's distance is retrieved. 
++   # 
++   # Returns: Individual_cooks --> a matrix with same dimension of the input Individual network , where the 
++   # ## i,j entry is the cook's value for variable j into predicting variable i 
++   # 
++   # """
++   c_name = colnames(IndNet)
++   data = data.frame(IndNet)
++   Individual_cooks = matrix(data = NA, nrow = nrow(IndNet), ncol = ncol(IndNet) )
++   for (i in 1: ncol(IndNet))
++   { 
++     forms = as.formula(paste(c_name[i], "~", "."))
++     mod = lm(forms, data = data)
++     cooksd <- cooks.distance(mod)
++     cooksd[1:5]
++     max(cooksd)
++     Individual_cooks[,i] = cooksd
++   }
++   
++   return(Individual_cooks)
++   
++ }
+> checkStrict(evaluate_Cook_distance)
+[1] TRUE
+> 
+> 
+> # SIMULATION microbiome data  ---------------------------------------------
+> 
+> 
+> 
+> library(gtools)
+> library(Pareto)
+> library(data.table)
+
+Attaching package: ‘data.table’
+
+The following object is masked from ‘package:SummarizedExperiment’:
+
+    shift
+
+The following object is masked from ‘package:GenomicRanges’:
+
+    shift
+
+The following object is masked from ‘package:IRanges’:
+
+    shift
+
+The following objects are masked from ‘package:S4Vectors’:
+
+    first, second
+
+> # install.packages("splitstackshape")
+> library(splitstackshape)
+> library(OptimalCutpoints)
+> 
+> 
+> 
+> 
+> 
+> # FUNCTION ----------------------------------------------------------------
+> 
+> 
+> calculating_AUC_cutoff = function(temp_data, direction = "<"){
++   # """
++   # Evaluate Cook_distance method - our custom implementation
++   # 
++   # Input: temp_data : Is a dataframe with two columns: is_out if it is an outlier 
++   #     and a vector of outlier values. 
++   # 
++   # Direction is if higher values of the predicted vector means more probable to be outlier or not. 
++   # 
++   # Calculation --> OPTIMAL CUTPOINT that calcualte the best cut to see outlier or not [ Youden method ]+
++   # AUC (into the roc)
++   # + confidence interval of the AUC 
++   # 
++   # Returns: a vector of vectos with the calculation belows
++   # 
++   # """
++   optimal.cutpoint.Youden <- optimal.cutpoints(X = colnames(temp_data)[2], status = colnames(temp_data)[1], tag.healthy = 0,direction = direction,
++                                                methods = "Youden", data = temp_data, pop.prev = NULL,
++                                                control = control.cutpoints(), ci.fit = FALSE, conf.level = 0.95, trace = FALSE)
++   
++   OPT_cutoff = optimal.cutpoint.Youden$Youden$Global$optimal.cutoff$cutoff[1] 
++   # this way it is assured to have the lowest threhsold
++   
++   roc = optimal.cutpoint.Youden$Youden$Global$measures.acc$AUC[1]
++   CI_roc = c( optimal.cutpoint.Youden$Youden$Global$measures.acc$AUC[2], 
++               optimal.cutpoint.Youden$Youden$Global$measures.acc$AUC[3] )
++   return(c(OPT_threshold = OPT_cutoff, roc, CI_roc))
++ }
+> checkStrict(calculating_AUC_cutoff)
+[1] TRUE
+> 
+> 
+> # Example in the paper ----------------------------------------------------
+> 
+> # https://www.biorxiv.org/content/10.1101/711317v3.full
+> # https://cran.r-project.org/web/packages/OptimalCutpoints/OptimalCutpoints.pdf
+> 
+> 
+> # ALL the possible dataset created ----------------------------------------
+> 
+> ## PARAMETERS
+> 
+> nsamples <- 5000 # number of sample analyzed for a single individual
+> 
+> # PARAMETER non-dirichlet
+> ns = c(100,500,1000)
+> ms = c(1,5,10)
+> dims = c(2,5,11,17)
+> out_gene_same_distrib = c(TRUE, FALSE)
+> 
+> # DIRICHLET parameters
+> perc_increase = c(0.1,0.25,0.4) ## there are no infor on these percentages
+> mult=c(1.1,1.5,2)
+> intensity_parameter = c(3)  
+> type_of_pareto_data = c(0,1,2)
+> 
+> # 
+> # d0 = rep(1/k,k)
+> # d1 = rPareto(k,1,0.7)
+> # #1 parameter of location --> the minimum 
+> # 
+> # d2 = rPareto(k,1,4) # --> 4 alpha parameter of dispersion alpha >> --> dispersion less
+> 
+> # dims = c(2,3)
+> # ms = c(1,5)
+> # ns = c(100)
+> 
+> # Create grid
+> 
+> full_GR = expand.grid(n =ns,m = ms,dim = dims, type_of_pareto_data = type_of_pareto_data,
++                       perc_increase = perc_increase, mult = mult, intensity_parameter = intensity_parameter)
+> 
+> 
+> ## we did not use all the right parameters as before, because there are too many parameters and would be too much
+> nass = rep(NA,nrow(full_GR))
+> 
+> # auc_list = data.frame(roc_Loo = nass, roc_KNN = nass, roc_optics = nass, roc_OTS = nass)
+> rep = 10000
+> # create the reference distribution with 10 000 repetition. 
+> 
+> args=(commandArgs(TRUE))
+> print(args) #args[1] will be you job number (1 to 10 in that case)
+character(0)
+> fold_fin = args[1]
+> 
+> set.seed(fold_fin)
+Error in set.seed(fold_fin) : supplied seed is not a valid integer
+Execution halted

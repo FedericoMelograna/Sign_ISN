@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --ntasks=1 #each job has one task
+#SBATCH --cpus-per-task=10 # each task uses 1 cpu
+#SBATCH --partition=urtgen_5days
+#SBATCH --mem-per-cpu=11000 #200GB
+#SBATCH --array=1-10
+
+#module load R 
+source /home/u/f058977/miniconda3/etc/profile.d/conda.sh
+conda activate r_high_out_env
+alias R="R --no-save --no-restore-data --quiet"
+Rscript ./Server_microbiome_run_parallel.R $SLURM_ARRAY_TASK_ID
+
+
