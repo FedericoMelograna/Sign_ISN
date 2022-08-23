@@ -120,10 +120,12 @@ plot_ggplot_nosd_trasp = function( Dataset, ymin_ = 0, ymax_ = 1){
 
 
 set.seed(123)
-setwd("C:/Users/fmelo/Desktop/Backup_Federico/Edge_mod_outlier/Simulations/Normality_simulations/Code/")
 
+data_path = "C:/Users/fmelo/Documents/GitHub/Sign_ISN/Simulations/Normality_simulations/Data"
+result_path = "C:/Users/fmelo/Documents/GitHub/Sign_ISN/Simulations/Normality_simulations/Graphs/Graphs_grouped_by_k/"
+setwd(data_path)
 
-Results_all_methods200 <- read.csv("C:/Users/fmelo/Desktop/Backup_Federico/Edge_mod_outlier/Simulations/Normality_simulations/Data/Results_all_methods200.txt")
+Results_all_methods200 <- read.csv("Results_all_methods200.txt")
 
 Res = Results_all_methods200[,2:ncol(Results_all_methods200)]
 colnames(Res) = c("N_obs", "N_out", "k", "same_distrib", colnames(Res)[1:29])
@@ -141,7 +143,7 @@ mean_glob = apply(Res, 2, function(x) mean(x, na.rm = T))
 mean_glob = round(mean_glob,3)
 
 # beware: not for every method each setting is available
-setwd("C:/Users/fmelo/Desktop/Backup_Federico/Edge_mod_outlier/Simulations/Normality_simulations/Graphs/Graphs_grouped_by_k/Barplot_big_out/")
+setwd(result_path)
 
 dd = data.frame(rbind(median_glob, mean_glob))
 # write.xlsx(rbind(median_glob, mean_glob), "SUMMARY_AUC.xlsx", sheetName = "Sheet1", 
